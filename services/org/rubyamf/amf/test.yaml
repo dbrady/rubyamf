@@ -1,0 +1,6 @@
+connection:
+  host: "localhost"
+  username: "root"
+  password: ""
+  adapter: "mysql"
+  database: "rubyamf"

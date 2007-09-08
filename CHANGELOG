@@ -1,5 +1,66 @@
+--changes 1.3.1
+#added Adapters.deep_adaptations See an adapters_config file for more information.
+
+--changes 1.3 FINAL
+#added more logic for incoming nil/undefined/empty associated active_record model data. Was a few cases when it wouldn't work correctly (see util/active_record#update_nil_associations)
+#add util/active_record#update_nans which updates any hash values that are NaN, turns them into nil
+#updated AS3FaultObject, no regex was needed in it anymore
+
+
+--changes 1.3 revision 756
+#Fixed bug when taking incoming VO's and mapping them to AR. I wasn't dealing with an :incoming class path (such as vo.Task). Now I strip off the class path and just use the class. (Task.downcase). This was causing the VO to be put in params['vo.Task']. Dah.
+#Fixed slight problem with incoming VO's and nil associated model data. If an incoming associated model was nil it was automatically becoming an Array. It's handled a little more graceful with ActiveRecord reflections to find out what an incoming nil members real value should be (Array / nil). If :has_many, val == []. If :belongs_to, val == nil, if :has_and_belongs_to_many, val = []
+#created_at and updated_at now work correctly according to ActiveRecord, because of the above bug fix.
+#took out puts in mysql_adapter
+#updated rails installer. It won't overwrite vo_config / adapter_config if it exists.
+
+--changes 1.3 RC2 revision 748
+#Added in FaultObject handling when sending back FaultObjects from Controller's, it had been stripped out when rewriting the rails plugin.
+#split vo / adapter configs into two files, now the configs live in rails/config/rubyamf. For LITE, the configs are now in rubyamf/services/config/
+#added ValueObjects.rails_parameter_mapping_type, to specify what get's put into params[:[voclass]]. Read the vo_config file fore more information
+
+--changes 1.3 RC2 revision 742
+#changed service.is_amf / service.is_rubyamf to 'false' after the service call to rails controller
+#gzip works now, strange as I didn't change anything specifically for it
+
+--changes 1.3 RC2
+#fixed Rails production environment problem
+#full controller support
+#added crossdomain.xml file to rails installer, now copies crossdomain to rails/public.
+#fixed RemoteObject fault handler executions for AsyncTokens.
+#took out two return statements in BatchFilter, as it should continue through the batch process.
+#re-wrote the rails plugin again. Now has full controller support, and does not harm with production enviornment.
+#util/action_controller_run_target no longer valid, see util/active_record, and util/action_controller.
+#changed the "inner" ActionController requests HTTP_ACCEPT header to accept application/x-amf, to enable the respond_to method to work properly
+
+--changes 1.3 RC1
+#rewrote rubyamf_core/adapters/active_record_adapter.rb to be recursive. Now handles VO mapping, and associated models when using :include
+#rewrote rubyamf_core/app/rails_gateway.rb. It now extends the normal gateway and just changes out the actions
+#completed VO mappings
+#added a fix in core/io/read_write.rb for a case when Rails would truncate the last \000 byte from AMF data. That was in Rails' ActionPack gem ActionController -> raw_post_data_fix.rb
+#Added @is_rubyamf to controllers.
+#added VoUtil class
+#added "as_single!", "single!" and "single?" helper to active record. See wiki.rubyamf.org/wiki/show/ActiveRecordSingles for more information about this
+#added util/active_record.rb. This implementes the single! method and single? method (single? is used internally to RubyAMF) See wiki.rubyamf.org/wiki/show/ActiveRecordSingles for more information about this
+#added util/openstruct.rb. #This is a fix for Object#id problems
+#added util/object.rb #this is a fix for Object#id problems
+#updated the VoUtil class for ActiveRecord VO instantiation
+#added ApplicationInitializationAction. This is used for RubyAMF lite when using AR VO's. (AR needs to be connected before incoming VO's can be turned into AR's)
+#added capability to change the rubyamf configuration file path
+#added ApplictionInstanceInitAction for configuration processing, and pre-emptive ActiveRecord connecting for ActiveRecord Value Object handling
+#added getActiveRecordFromOpenStruct, for incoming VO usage.
+#changed all mappings variables to use the new ValueObjects class in configuration.rb
+#added makeHashFromOpenStruct, used in combination with getActiveRecordFromOpenStruct.
+#changed deserializer ValueObject mapping to include the new ActiveRecord Value Object mapping functionality
+#updated the active_record_connector helper. updated so I can use it in ApplicationInitInstanceAction.
+#rails installer now copies rubyamf_core/app/default_rails_config into rails/config/rubyamf_config.rb.
+--#added active record error handling, return an active record with errors and it sends back the first error in the errors hash as a string (EX: "login already taken")
+--#thread safety
+--#re-wrote rails plugin as to not break everything when in production environment
+
 --changes 1.2
 ####RAILS
+#rails installer (ruby script/plugin install svn://rubyforge.org/var/svn/rubyamf/tags/current/rubyamf)
 #support for respond_to/format.amf { render :amf => content }. You must add a mime type into railsapp/config/environment.rb (Mime::Type.register "application/x-amf", :amf)
 See the page http://wiki.rubyamf.org/wiki/show/AmfRest for more info
 #took out some puts statements
@@ -116,3 +177,4 @@ See the page http://wiki.rubyamf.org/wiki/show/AmfRest for more info
 #shifted in the RequestStore.SERVICE_PATH to $:. When using require in a service, start from where the top of the declared service directory
 #minor benchmarking and profiling, this things pretty fast.
 #Added RUBYAMF_SERVICES global var. This is for services when using the require statement. If you need to require anything of your own, use this is the prefix, then build from there. As usually you'll need to require rubygems. But rubygems screws with the load path. So chances are everything will error out if you don't use this new variable.
+

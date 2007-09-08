@@ -1,5 +1,3 @@
-#Copyright (c) 2007 Aaron Smith (aaron@rubyamf.org) - MIT License
-
 require 'app/amf'
 require 'exception/exception_handler'
 require 'io/amf_serializer'
@@ -45,7 +43,6 @@ class AuthenticationFilter
 	    RequestStore.auth_header = nil
 	  rescue Exception => e
 	  end
-	  
 		auth_header = amfobj.get_header_by_key('Credentials')
 		if auth_header
 		  RequestStore.auth_header = auth_header #store the auth header for later
@@ -65,17 +62,15 @@ class BatchFilter
 		0.upto(body_count - 1) do |i| #loop through all bodies, do each action on the body
 			body = amfobj.get_body_at(i)
 			RequestStore.actions.each do |action|
-				begin #this is where any exception throughout the RubyAMF Process gets transofmed into a relevant AMF0/AMF3 faultObject
+				begin #this is where any exception throughout the RubyAMF Process gets transformed into a relevant AMF0/AMF3 faultObject
 					action.run(body)
 				rescue RUBYAMFException => ramfe
 				  ramfe.ebacktrace = ramfe.backtrace.to_s
 					ExceptionHandler::HandleException(ramfe,body)
-					return
 				rescue Exception => e
 					ramfe = RUBYAMFException.new(e.class.to_s, e.message.to_s) #translate the exception into a rubyamf exception
 					ramfe.ebacktrace = e.backtrace.to_s
 					ExceptionHandler::HandleException(ramfe, body)
-          return
 				end
   		end
 		end

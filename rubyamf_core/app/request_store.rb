@@ -1,5 +1,3 @@
-#Copyright (c) 2007 Aaron Smith (aaron@rubyamf.org) - MIT License
-
 module RUBYAMF
 module App
 
@@ -31,14 +29,16 @@ class RequestStore
   @rails_authentication
   @available_services = {}
   @auth_header = nil
-  @rails_cookies
-  @rails_session
   @reload_services = false
+  @config_path
+  @app_instance
+  @rails_request
+  @rails_response
 
 	class << self
 	  attr_accessor :actions
 	  attr_accessor :filters
-	  attr_accessor :client #0 flash player , #1 flash comm
+	  attr_accessor :client
 	  attr_accessor :service_path
 	  attr_accessor :gateway_path
 	  attr_accessor :actions_path
@@ -61,9 +61,11 @@ class RequestStore
 	  attr_accessor :rails_authentication
 	  attr_accessor :available_services
 	  attr_accessor :auth_header
-	  attr_accessor :rails_cookies
-	  attr_accessor :rails_session
+	  attr_accessor :config_path
+	  attr_accessor :app_instance
 	  attr_accessor :reload_services
+	  attr_accessor :rails_request
+	  attr_accessor :rails_response
 	end
 
 end

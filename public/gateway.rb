@@ -45,7 +45,8 @@ begin
 
   #services dir
   gateway.services_path = RUBYAMF_SERVICES
-
+  gateway.config_path = RUBYAMF_SERVICES + '/config/'
+  
   #default log level (debug, info, warn, error, fatal)
   gateway.log_level = OPTIONS[:log_level]
 

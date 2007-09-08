@@ -1,5 +1,3 @@
-#Copyright (c) 2007 Aaron Smith (aaron@rubyamf.org) - MIT License
-
 require 'app/amf'
 include RUBYAMF::AMF
 
@@ -7,14 +5,10 @@ include RUBYAMF::AMF
 class LafcadioAdapter
   
   def use_adapter?(results)
-    begin
-      if(results.class.superclass.to_s == 'Lafcadio::DomainObject' || results[0].class.superclass.to_s == 'Lafcadio::DomainObject')
-        return true
-      end
-      false
-    rescue Exception => e
-      false
+    if(results.class.superclass.to_s == 'Lafcadio::DomainObject' || results[0].class.superclass.to_s == 'Lafcadio::DomainObject')
+      return true
     end
+    false
   end
   
   def run(result)

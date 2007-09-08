@@ -1,17 +1,22 @@
-#Copyright (c) 2007 Aaron Smith (aaron@rubyamf.org) - MIT License
-
 require 'app/request_store'
 require 'app/amf'
-require 'exception/exception_handler'
 require 'app/actions'
 require 'app/filters'
+require 'app/configuration'
+require 'exception/exception_handler'
+require 'ostruct'
+require 'util/object'
+require 'util/openstruct'
+require 'util/string'
 require 'util/log'
 require 'util/net_debug'
+require 'util/active_record'
 require 'logger'
 require 'zlib'
 include RUBYAMF::Actions
 include RUBYAMF::App
 include RUBYAMF::AMF
+include RUBYAMF::Configuration
 include RUBYAMF::Filter
 include RUBYAMF::Exceptions
 include RUBYAMF::Util
@@ -19,7 +24,7 @@ include RUBYAMF::Util
 module RUBYAMF
 module App
 
-#the rubyamf gateway. all requests circulate through this classes __service__ method
+#the rubyamf gateway. all requests circulate through this classes service method
 class Gateway
 	
 	#creates a new gateway instance
@@ -31,16 +36,17 @@ class Gateway
 		RequestStore.filters_path = File.dirname(__FILE__) + '/filter/'
 		RequestStore.adapters_path = File.dirname(__FILE__) + '/../adapters/'
 		RequestStore.logs_path = File.dirname(__FILE__) + '/../logs/'
-		RequestStore.actions = Array[PrepareAction.new, ClassAction.new, InvokeAction.new, ResultAdapterAction.new] #create the actions
+		RequestStore.actions = Array[PrepareAction.new, ClassAction.new, ApplictionInstanceInitAction.new, InvokeAction.new, ResultAdapterAction.new] #create the actions  
 		RequestStore.filters = Array[AMFDeserializerFilter.new, RecordsetFormatFilter.new, AuthenticationFilter.new, BatchFilter.new, nd, AMFSerializeFilter.new] #create the filter
 	end
 	
 	#all get and post requests circulate throught his method
 	def service(raw)
+	  app_config #run configuration scripts
 		amfobj = AMFObject.new(raw)
 		filter_chain = FilterChain.new
 		filter_chain.run(amfobj)
-		if(RequestStore.gzip)
+		if RequestStore.gzip
 		  return Zlib::Deflate.deflate(amfobj.output_stream)
 		else
 		  return amfobj.output_stream
@@ -59,6 +65,11 @@ class Gateway
 	#turn on and off the NetDebug functionality
 	def allow_net_debug=(val)
 	  RequestStore.net_debug = val
+	end
+	
+	#set the config path
+	def config_path=(val)
+	  RequestStore.config_path = val
 	end
 	
 	def recordset_format=(val)
@@ -93,6 +104,21 @@ class Gateway
 			@log.level = Logger::FATAL
 		end
 	end
+
+private
+	#This just requires the config file so that that configuration code runs
+	def app_config
+	  begin
+	    require RequestStore.config_path + 'vo_config'
+	    require RequestStore.config_path + 'adapters_config'
+	    require RequestStore.config_path + 'application_instance_config'
+	  rescue Exception => e
+	    STDOUT.puts "You have an error in your rubyamf_config file, please correct it."
+	    STDOUT.puts e.message
+	    STDOUT.puts e.backtrace
+	  end
+  end
+  
 end
 end
 end

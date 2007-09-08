@@ -1,0 +1,6 @@
+development:
+  host: "localhost"
+  username: "root"
+  password: ""
+  adapter: "mysql"
+  database: "ar_rubyamf_testings"

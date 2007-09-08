@@ -1,10 +1,9 @@
-#Copyright (c) 2007 Aaron Smith (aaron@rubyamf.org) - MIT License
-
 require 'app/request_store'
 require 'app/amf'
 require 'date'
 require 'exception/rubyamf_exception'
 require 'io/read_write'
+require 'util/vo_util'
 require 'kconv'
 require 'rexml/document'
 include RUBYAMF::AMF
@@ -226,7 +225,7 @@ class AMFDeserializer
     
     while ((b & 0x80) != 0 && n < 3)
         result = result << 7
-        result = result | (b & 0x7f)
+        result = result | (b.to_i & 0x7f)
         b = read_word8
         n = n + 1
     end
@@ -378,7 +377,7 @@ class AMFDeserializer
         if classReference < @stored_defs.length
           classDefinition = @stored_defs[classReference]
         else
-  				raise( RUBYAMFException.new(RUBYAMFException.UNDEFINED_DEFINITION_REFERENCE_ERROR, "Reference to non existant class definition #{classReference}"))
+  				raise RUBYAMFException.new(RUBYAMFException.UNDEFINED_DEFINITION_REFERENCE_ERROR, "Reference to non existant class definition #{classReference}")
         end
       else
         className = read_amf3_string
@@ -393,20 +392,13 @@ class AMFDeserializer
         end
     
         classDefinition = {"type" => className, "members" => classMembers, "externalizable" => externalizable, "dynamic" => dynamic}
-        
         @stored_defs << classDefinition
       end
       
-      #classDefinition = nil #this is temporary, even if you send custom objects, i'm typing it as generic object
-      isObject = false
-      #if classDefinition != nil
-        #TODO map to class here
-      #else
-      ob = OpenStruct.new
-      #end
+      ob = OpenStruct.new #initialize an empty OpenStruct value holder
       
-      #@stored_objects << ob #add to stored objects first, cicular references are needed.
-      type = classDefinition['type']
+      @stored_objects << ob #add to stored objects first, cicular references are needed.
+      type = classDefinition['type'] #get the className according to type
       
       if classDefinition['externalizable']
         if(type == 'flex.messaging.io.ArrayCollection')
@@ -432,13 +424,18 @@ class AMFDeserializer
         		key = read_amf3_string #read next key
           end
         end
-        
-    		if(type != '' && ob.is_a?(OpenStruct))
-    			ob._explicitType = type
+
+        #Value Object
+        #if type not nil and it is an OpenStruct, check VO Mapping
+    		if type != nil && ob.is_a?(OpenStruct)
+          ob._explicitType = type #assign the _explictType right away, however if this is a valid VO, it get's changed in VoUtil
+          vo = VoUtil.get_vo_for_incoming(ob, type)
+          if vo != nil
+            return vo
+          end
         end
       end
-
-      return ob      
+      return ob
     end
 	end
   
@@ -459,7 +456,6 @@ class AMFDeserializer
       return ob
     end
   end
-  
   
   #AMF0	
 	def read_number
@@ -516,6 +512,7 @@ class AMFDeserializer
 		time
 	end
 	
+=begin	#OLD AMF0 VO MAPPING METHOD
 	def read_custom_class
 		type = read_utf
 		load_success = false
@@ -542,9 +539,28 @@ class AMFDeserializer
 		  return klazz
 		end
 	  value #if VO not loaded correctly, returns a standard Object
-	end
+	end	
+=end
+
+  #Reads and instantiates a custom incoming ValueObject
+  def read_custom_class
+  	type = read_utf
+  	value = read_object
 	
-	def read_mixed_array
+  	#Value Object
+    #if type not nil and it is an OpenStruct, check VO Mapping
+  	if type != nil && ob.is_a?(OpenStruct)
+      ob._explicitType = type #assign the _explictType right away, however if this is a valid VO, it get's changed in VoUtil
+      vo = VoUtil.get_vo_for_incoming(ob, type)
+      if vo != nil
+        return vo #prematurly return the new VO
+      end
+    end
+    value #return value if no VO was created
+  end
+
+  #reads a mixed array
+  def read_mixed_array
     ash = Hash.new
     key = read_utf
     type = read_byte
@@ -556,7 +572,7 @@ class AMFDeserializer
     end
     ash
   end
-  
+
   def read_object
 	  aso = OpenStruct.new
 	  amf0_object_default_members_ignore = []

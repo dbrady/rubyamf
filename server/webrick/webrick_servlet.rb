@@ -8,7 +8,7 @@ RUBYAMF_CORE = File.expand_path(Dir::pwd) + '/rubyamf_core/'
 RUBYAMF_PUBLIC = File.expand_path(Dir::pwd) + '/public/'
 RUBYAMF_SERVICES = RUBYAMF_ROOT + OPTIONS[:services_path] #else use the root + whatever they declared.
 RUBYAMF_HELPERS = RUBYAMF_SERVICES + 'service_helpers/'
-RUBYAMF_VO = RUBYAMF_SERVICES + 'service_vos/'
+RUBYAMF_VO = RUBYAMF_SERVICES
 
 #add rubyamf_core as first search path
 $:.unshift(RUBYAMF_CORE)
@@ -58,36 +58,35 @@ class WEBrickServlet < WEBrick::HTTPServlet::AbstractServlet
   		#create a new rubyamf gateway for processing
   		gateway = Gateway.new
 		  
-  		#set the services path relative to this gateway.servlet file
+  		#set pathing options for the gateway
   		gateway.services_path = RUBYAMF_SERVICES
+  		gateway.config_path = RUBYAMF_SERVICES + '/config/'
 		  
   		#default log level (debug, info, warn, error, fatal, none)
-  		gateway.log_level = OPTIONS[:log_level].to_s
+  		gateway.log_level = OPTIONS[:log_level]
 		  
   		#see an exceptions backtrace in the fault object / netconnection debugger and the logger. 
   		#Servers must be restarted if this state is changed
   		gateway.backtrace_on_error = OPTIONS[:backtrace]
 		  
   		#turn on or off NetDebug functionality
-  		#use NetDebug.Trace(msg) in a service method.
+  		#use NetDebug.Trace(msg) in a service method. #Flash 8 only
   		gateway.allow_net_debug = OPTIONS[:net_debug]
 			
 			#if your using Flash 9 with Flash Remoting the format needs to be 'fl9'
-			#if your useing Flash 8 with Flash Remogin the format needs to be 'fl8'
+			#if your useing Flash 8 with Flash Remoting the format needs to be 'fl8'
 			#Flex FDS RemoteObject is handled nativly. No need to adjust the format for that.
 			gateway.recordset_format = 'fl8' #OR 'fl9'
 			#Note: You can use netConnection.addHeader to change this from Flash instead.
 			#service.addHeader('recordset_format',false,'fl9');
-			#service.addHeader('recordset_format',false,'fl8')
+			#service.addHeader('recordset_format',false,'fl8');
       #Read more about why this has to be specifically set at wiki.rubyamf.org/wiki/show/RecordSetFormat
 			
-			#puts request.raw_header.to_s
 			#Compress the amf output for smaller data transfer over the wire
 			if(request.raw_header.to_s.match(/gzip,[\s]{0,1}deflate/))
 			  gateway.gzip_outgoing = false #leave false, this doesn't completely work yet.
 			end
 			
-			#amf_response = ''
   	  #if not flash user agent, send some html content
   		if request.raw_header.to_s.match(/x-amf/) == nil
   		  amf_response = "Your Flash remoting gateway is alive and well. See 

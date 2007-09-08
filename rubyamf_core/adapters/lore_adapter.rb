@@ -1,5 +1,3 @@
-#Copyright (c) 2007 Aaron Smith (aaron@rubyamf.org) - MIT License
-
 require 'app/amf'
 include RUBYAMF::AMF
 
@@ -7,7 +5,7 @@ include RUBYAMF::AMF
 class LoreAdapter
 	
 	def use_adapter?(result)
-	  #not implemented
+    false
 	end
 	
 	# run the action on an AMFBody#result instance var

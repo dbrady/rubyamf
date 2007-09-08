@@ -1,5 +1,3 @@
-#Copyright (c) 2007 Aaron Smith (aaron@rubyamf.org) - MIT License
-
 require 'app/request_store'
 require 'digest/sha1'
 require 'digest/md5'

@@ -1,5 +1,3 @@
-#Copyright (c) 2007 Aaron Smith (aaron@rubyamf.org) - MIT License
-
 require 'app/amf'
 include RUBYAMF::AMF
 
@@ -8,14 +6,10 @@ class ObjectGraphAdapter
   
   #need to use this adapter for objectgraph?
   def use_adapter?(results)
-    begin
-      if(results.class.superclass.to_s == 'Og::Model' || results[0].class.superclass.to_s == 'Og::Model')
-        return true
-      end
-      false
-    rescue Exception => e
-      false
+    if(results.class.superclass.to_s == 'Og::Model' || results[0].class.superclass.to_s == 'Og::Model')
+      return true
     end
+    false
   end
   
   #When multiple Og::Model

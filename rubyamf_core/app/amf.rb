@@ -1,5 +1,3 @@
-#Copyright (c) 2007 Aaron Smith (aaron@rubyamf.org) - MIT License
-
 require 'ostruct'
 require 'exception/rubyamf_exception'
 include RUBYAMF::Exceptions
@@ -270,7 +268,15 @@ class AMFBody
 	
 	#set class file uri for amf3
 	def set_amf3_class_file_and_uri
-		if @target_uri.include?('.')
+		#Catch missing source property on RemoteObject
+		if @target_uri.nil?
+		  if RequestStore.flex_messaging
+		    raise RUBYAMFException.new(RUBYAMFException.USER_ERROR, "There is no \"source\" property defined on your RemoteObject, please see RemoteObject documentation for more information.")
+		  else
+		    raise RUBYAMFException.new(RUBYAMFException.SERVICE_TRANSLATION_ERROR, "The correct service information was not provided to complete the service call. The service and method name were not provided")
+		  end
+		end
+	  if @target_uri.include?('.')
 			nw = @target_uri.clone.split('.')
 			@service_name = nw.last.clone
 			@class_file = nw.last.clone << '.rb'
@@ -305,16 +311,28 @@ class ASFault < OpenStruct
 				
 		backtrace = e.backtrace || e.ebacktrace #grab the correct backtrace
 		
-		linerx = /:(\d*):/
-		line = linerx.match(backtrace[0])[1] #get the numbers
+		begin
+		  linerx = /:(\d*):/
+  		line = linerx.match(backtrace[0])[1] #get the numbers
+		rescue Exception => e
+	    line = 'No backtrace was found in this exception'
+	  end
+	  
+	  begin
+		  methodrx = /`(\S*)\'/
+  		method = methodrx.match(backtrace[0])[1] #just method name
+		rescue Exception => e
+		  method = "No method was found in this exception"
+		end
 		
-		methodrx = /`(\S*)\'/
-		method = methodrx.match(backtrace[0])[1] #just method name
+		begin
+  		classrx = /([a-zA-Z0-9_]*)\.rb/
+  		classm = classrx.match(backtrace[0]) #class name
+	  rescue Exception => e
+	    classm = "No class was found in this exception"
+	  end
 		
-		classrx = /([a-zA-Z0-9_]*)\.rb/
-		classm = classrx.match(backtrace[0]) #class name
-		
-		self.code = e.etype.to_s
+		self.code = e.etype.to_s #e.type.to_s
 		self.description = e.message
 		self.details = backtrace[0]
 		self.level = 'UserError'
@@ -323,7 +341,7 @@ class ASFault < OpenStruct
 		self.function = method
 		self.faultString = e.message
 		self.faultCode = e.etype.to_s
-		self.backtrace = backtrace if RequestStore.use_backtraces == true #only show backtrace if allowable
+		self.backtrace = backtrace
 	end
 end
 
@@ -333,25 +351,13 @@ class AS3Fault < OpenStruct
   #pass a RUBYAMFException, create new keys based on exception for the fault object
 	def initialize(e)
 		super(nil)
-		
-		backtrace = e.backtrace || e.ebacktrace #grab the correct backtrace
-		
-		linerx = /:(\d*):/
-		line = linerx.match(backtrace[0])[1] #get the numbers
-		
-		methodrx = /`(\S*)\'/
-		method = methodrx.match(backtrace[0])[1] #just method name
-		
-		classrx = /([a-zA-Z0-9_]*)\.rb/
-		classm = classrx.match(backtrace[0]) #class name
-		
+		backtrace = e.backtrace || e.ebacktrace #grab the correct backtrace		
     self._explicitType = 'flex.messaging.messages.ErrorMessage'
-		self.faultCode = e.etype.to_s
+		self.faultCode = e.etype.to_s #e.type.to_s
 		self.faultString = e.message
-		self.faultDetail = backtrace[0]
-		self.rootCause = ""
-    self.extendedData = ""
-		self.backtrace = backtrace if RequestStore.use_backtraces == true #only show backtrace if allowable
+		self.faultDetail = backtrace
+		self.rootCause = backtrace[0]
+    self.extendedData = backtrace
 	end
 end
 

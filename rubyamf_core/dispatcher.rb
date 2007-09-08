@@ -9,7 +9,8 @@
 # Website: http://derrick.pallas.us/ruby-cgi/
 # License: Academic Free License 2.1
 # Version: 2005-12-23a
-# 
+#
+#--
 
 require 'rubygems'
 require 'fcgi'

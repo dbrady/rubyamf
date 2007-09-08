@@ -18,14 +18,12 @@ rescue Exception => e
   STDOUT.puts "You must have mongrel installed. 'sudo gem install mongrel --include-dependencies"
   exit(0)
 end
-require 'adapter_settings'
 require 'optparse'
 require 'app/gateway'
 require 'app/request_store'
 require 'util/log'
 include RUBYAMF::App
 include RUBYAMF::Util
-include Adapters
 
 module RUBYAMF
 
@@ -56,6 +54,7 @@ class MongrelServlet < Mongrel::HttpHandler
           
       		#set the services path relative to this gateway.servlet file
       		gateway.services_path = RUBYAMF_SERVICES
+      		gateway.config_path = RUBYAMF_SERVICES + '/config/'
       		
       		#the value object mapping location
     		  gateway.set_vo_path = RUBYAMF_SERVICES + 'vo'

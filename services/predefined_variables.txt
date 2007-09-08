@@ -5,7 +5,6 @@ RUBYAMF_CORE 			#which maps to the rubyamf_core directory
 RUBYAMF_SERVICES 	#maps to the rubyamf/services directory
 RUBYAMF_PUBLIC 		#maps to the rubyamf/public directory
 RUBYAMF_HELPERS 	#maps to the rubyamf/services/rubyamf/helpers directory
-RUBYAMF_VO 				#maps to the rubyamf/services/vo directory
 
 These are good to use when loading files, especially if you are requiring rubygems anywhere.
 rubygems spams the load path $:. So lots of times if you dont use one of these predefined vars

@@ -1,5 +1,3 @@
-#Copyright (c) 2007 Aaron Smith (aaron@rubyamf.org) - MIT License
-
 module RUBYAMF
 module Exceptions
 
@@ -45,6 +43,15 @@ class RUBYAMFException < Exception
 	#when the Rails ActionController Filter chain haults
 	@FILTER_CHAIN_HAULTED = 'RAILS_ACTION_CONTROLLER_FILTER_CHAIN_HAULTED'
   
+  #when active record errors
+  @ACTIVE_RECORD_ERRORS = 'ACTIVE_RECORD_ERRORS'
+  
+  #whan amf data is incomplete or incorrect
+  @AMF_ERROR = 'AMF_ERROR'
+  
+  #vo errors
+  @VO_ERROR = 'VO_ERROR'
+  
   attr_accessor :message
 	attr_accessor :etype
 	attr_accessor :ebacktrace
@@ -67,6 +74,9 @@ class RUBYAMFException < Exception
 	  attr_accessor :INTERNAL_ERROR
 	  attr_accessor :UNSUPPORTED_AMF0_TYPE
 	  attr_accessor :FILTER_CHAIN_HAULTED
+	  attr_accessor :ACTIVE_RECORD_ERRORS
+	  attr_accessor :VO_ERROR
+	  attr_accessor :AMF_ERROR
 	end
   
 	def initialize(type,msg)

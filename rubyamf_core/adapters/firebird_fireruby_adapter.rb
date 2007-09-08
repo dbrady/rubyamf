@@ -1,13 +1,12 @@
 require 'app/amf'
 include RUBYAMF::AMF
 
-#Copyright (c) 2007 Aaron Smith (aaron@rubyamf.org) - MIT License
-
 #Firebird - FireRuby
 class FirebirdFirerubyAdapter
 	
 	def use_adapter?(result)
 	  #not implemented
+	  false
 	end
 	
 	# run the action on an AMFBody#result instance var

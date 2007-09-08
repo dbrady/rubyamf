@@ -1,5 +1,3 @@
-#Copyright (c) 2007 Aaron Smith (aaron@rubyamf.org) - MIT License
-
 require 'app/amf'
 include RUBYAMF::AMF
 
@@ -8,14 +6,10 @@ class PostgresAdapter
 	
 	#use the postgres adapter?
 	def use_adapter?(results)
-	  begin
-	    if results.class.to_s == 'PGresult'
-  	    return true
-  	  end
-  	  false
-    rescue Exception => e
-      false
-    end
+    if results.class.to_s == 'PGresult'
+	    return true
+	  end
+    false
 	end
 	
 	#run the action on an AMFBody#result instance var

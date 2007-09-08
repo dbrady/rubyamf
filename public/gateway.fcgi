@@ -1,4 +1,4 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env ruby -w
 
 #Copyright (c) 2007 Aaron Smith (aaron@rubyamf.org) - MIT License
 
@@ -10,7 +10,6 @@ begin
   RUBYAMF_PUBLIC = File.expand_path( File.dirname(__FILE__) ) + '/../public/'
   RUBYAMF_HELPERS = RUBYAMF_ROOT + '/services/service_helpers/'
   RUBYAMF_VO = RUBYAMF_ROOT + 'service_vo/'
-  
   $:.unshift(RUBYAMF_CORE)
   
   #now require the support classes to handle the amf request
@@ -36,9 +35,6 @@ begin
   
   #services have to be set here otherwise exceptions are thrown, not sure why
   RUBYAMF_SERVICES = RUBYAMF_ROOT + '/services/'
-
-  #set services path on gateway
-  gateway.services_path = RUBYAMF_SERVICES
   
   #request store is just for this request.
   RequestStore.query_params = cgi.params()
@@ -46,6 +42,10 @@ begin
   
   #create a new rubyamf gateway for processing
   gateway = Gateway.new
+
+  #set services path on gateway
+  gateway.services_path = RUBYAMF_SERVICES
+  gateway.config_path = RUBYAMF_SERVICES + '/config/'
 
   #default log level (debug, info, warn, error, fatal)
   gateway.log_level = 'fatal'

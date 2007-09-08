@@ -1,5 +1,3 @@
-#Copyright (c) 2007 Aaron Smith (aaron@rubyamf.org) - MIT License
-
 require 'app/amf'
 include RUBYAMF::AMF
 
@@ -7,14 +5,10 @@ include RUBYAMF::AMF
 class SequelAdapter
   
   def use_adapter?(result)
-    begin
-      if result.class.to_s.match(/Sequel::[a-zA-Z0-9]*::Dataset/)
-        return true
-      end
-      false
-    rescue Exception => e
-      false
+    if result.class.to_s.match(/Sequel::[a-zA-Z0-9]*::Dataset/)
+      return true
     end
+    false
   end
   
   #run results through sequel adapter

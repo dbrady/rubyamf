@@ -1,3 +1,36 @@
+--changes 1.3.3b
+#updated rails parameter mapping for sending generic objects from flash/flex
+
+--changes 1.3.3a
+#gook out references to amf_id in serializer
+#reverted a condition in the util/action_controller that was breaking new/create/edit/update action controller methods, after a remoting call had been made
+
+--changes 1.3.3
+#updated the ActiveRecord::Base.update_nil_associations method. Added the 3rd open struct param. Which takes the original incoming ValueObject, and set's any similar associated model properties to the same values that are being assigned to the hash association properties. This was causing an issue with some models, not all. Not sure what the qualifications were for this being an issue, but it's fixed.
+#fixed incoming AMF stream object references when reading Objects.
+#Fixed outgoing AMF stream object references.
+
+--changes
+1.3.2b
+#Updated VoUtil again for incoming VO's. If any properties are nil, they're now deleted out of the open struct so that the resulting update hash for active record doesn't put in NULL into the database.
+
+--changes 1.3.2a
+#put a fix in VoUtil to handle incoming "update VO", if the created_at or updated_at is nil it's not updated.
+
+--changes 1.3.2
+#added AMF0 / AMF3 NaN support ("NaN" constant in ruby)
+#added AMF3 Infinity support ("Infinity" constant in ruby)
+#added AMF3 -Infinity support ("NInfinity" constant in ruby)
+#added BigDecimal support
+#added isNaN Top Level function (has alias of isNaN?)
+#added isFinite Top Level function (has alias of isFinite?)
+#added some better logic for incoming VO -> params[:] mapping. Now the first incoming VO properties get merged into the params hash. Thus params[:id] will work. (enabling update,edit,destroy scaffolding methods)
+#put a rescue_action in the rubyamf_controller. This needs to be piped back to flash yet. This is the only case where exceptions can't get returned to the player.
+#took out ValueObjects.rails_parameter_mapping_type. It is always 'update_hash', not really needed anymore.
+#changed recordset_format default to be FL9
+#Handled bug with Date/Time/DateTime not writing as correct reference to other Date's in the AMF stream, (if the same date was being returned, it would write a reference, but writing references to dates does not work correctly in the player)
+#fixed final friggin 'id' property problems. All id attributes come through correctly now, (both ways).
+
 --changes 1.3.1
 #added Adapters.deep_adaptations See an adapters_config file for more information.
 
@@ -5,7 +38,6 @@
 #added more logic for incoming nil/undefined/empty associated active_record model data. Was a few cases when it wouldn't work correctly (see util/active_record#update_nil_associations)
 #add util/active_record#update_nans which updates any hash values that are NaN, turns them into nil
 #updated AS3FaultObject, no regex was needed in it anymore
-
 
 --changes 1.3 revision 756
 #Fixed bug when taking incoming VO's and mapping them to AR. I wasn't dealing with an :incoming class path (such as vo.Task). Now I strip off the class path and just use the class. (Task.downcase). This was causing the VO to be put in params['vo.Task']. Dah.

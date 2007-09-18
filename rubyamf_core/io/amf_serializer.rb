@@ -1,5 +1,6 @@
 require 'app/amf'
 require 'app/configuration'
+require 'bigdecimal'
 require 'date'
 require 'io/read_write'
 require 'ostruct'
@@ -92,7 +93,7 @@ class AMFSerializer
 	end
 		
 	#write Ruby data as AMF to output stream
-	def write(value)
+	def write(value)	 
 	  if Adapters.deep_adaptations
 	    #if amf3, don't attempt any adaptations here. Otherwise this same call will be duplicated when we get to write_amf3
   	  if RequestStore.amf_encoding != 'amf3' && @adaptable_lookup[value.class.to_s] != false #true or nil will meet the condition, allowing an adaptation attempt
@@ -108,13 +109,27 @@ class AMFSerializer
 	  elsif RequestStore.amf_encoding == 'amf3'
 		  write_byte(AMF3_TYPE)
 		  write_amf3(value)
-		
+		  		
 		elsif value.is_a?(ASRecordset)
 		  write_recordset(value)
-		      
+		
+		elsif value.to_s == 'NaN' && value.object_id == NaN.object_id
+      write_number(value.to_f)
+		
+    elsif value.to_s == 'Infinity' && value.object_id == Infinity.object_id
+      write_byte(0x05)
+      write_double(value.to_f)
+    
+    elsif value.to_s == "-Infinity" && value.object_id == NInfinity.object_id
+      write_byte(0x05)
+      write_double(value.to_f)
+          
 		elsif value.nil?
 			write_null
-      
+    
+    elsif value.is_a?(BigDecimal)
+      write_number(value.to_f)
+    
     elsif (value.is_a?(Float))
 			write_number(value)
       
@@ -173,12 +188,24 @@ class AMFSerializer
       end
     end
     
-    if(value.nil?)
+    if value.to_s == 'NaN' && value.object_id == NaN.object_id
+      write_byte(0x05)
+      write_double(value.to_f)
+    
+    elsif value.to_s == 'Infinity' && value.object_id == Infinity.object_id
+      write_byte(0x05)
+      write_double(value.to_f)
+    
+    elsif value.to_s == "-Infinity" && value.object_id == NInfinity.object_id
+      write_byte(0x05)
+      write_double(value.to_f)
+    
+    elsif value.nil?
       write_byte(AMF3_NULL)
     
     elsif (value.is_a?(TrueClass) || value.is_a?(FalseClass))
       if(value == true)
-       write_byte(AMF3_TRUE)
+        write_byte(AMF3_TRUE)
       else
         write_byte(AMF3_FALSE)
       end
@@ -194,6 +221,11 @@ class AMFSerializer
       write_double(value)
     
     elsif(value.is_a?(Bignum))
+      write_byte(0x05)
+      write_double(value)
+    
+    elsif value.is_a?(BigDecimal)
+      value = value.to_s('F').to_f #this is turning a string into a Ruby Float, but because there are no further operations on it it is safe
       write_byte(0x05)
       write_double(value)
     
@@ -273,12 +305,6 @@ class AMFSerializer
   end
   
 	def write_amf3_string(value)
-	  
-	  #this is a *hack* for
-	  if value == 'amf_id'
-	    value = 'id'
-	  end
-	  
     if(value == "")
       write_byte(0x01)
     else
@@ -299,28 +325,13 @@ class AMFSerializer
   
   def write_amf3_object(value)        
 		i = @stored_objects.index(value)
-		if(i != nil)
+		if i != nil
 		  reference = i << 1
 			write_amf3_integer(reference)
 		else
-		  begin
-  			if value.rmembers != nil
-  			  members = value.rmembers
-  			elsif(value.is_a?(OpenStruct))
-          members = value.marshal_dump.keys.map{|k| k.to_s} #returns an array of all the keys in the OpenStruct
-  			else
-  			  members = value.instance_variables.map{|mem| mem[1,mem.length]}
-  			end
-		  rescue Exception => e
-		    #if exception from testing against value.rmembers is thrown, catch here and make sure to set members
-		    if(value.is_a?(OpenStruct))
-          members = value.marshal_dump.keys.map{|k| k.to_s} #returns an array of all the keys in the OpenStruct
-  			else
-  			  members = value.instance_variables.map{|mem| mem[1,mem.length]}
-  			end
-  	  end
+		  members = value.get_members
 	    
-			#Type this as a dynamic object
+			#type this as a dynamic object
 			write_byte(0x0B)
 			
 			classname = ""
@@ -351,7 +362,7 @@ class AMFSerializer
   
   def write_amf3_array(value)
     i = @stored_objects.index(value)
-    if (i != nil)
+    if i != nil
       reference = i << 1
       write_amf3_integer(reference)
     else
@@ -366,20 +377,29 @@ class AMFSerializer
   end
   
   def write_amf3_mixed_array(value) #ruby hash to AMF3 dynamic object
-    #Type this as a dynamic object
-		write_byte(0x0A)
-		write_byte(0x0B)
-		write_amf3_string("") #Anonymous object
-    value.each do |k,v|
-      write_amf3_string(k.to_s)
-      write_amf3(v)
-    end
-		write_amf3_string("")
+    i = @stored_objects.index(value)
+    if i != nil
+      reference = i << 1
+      #type as dynamic object
+      write_byte(0x0A)
+      write_amf3_integer(reference)
+    else
+      @stored_objects << value
+      #Type this as a dynamic object
+  		write_byte(0x0A)
+  		write_byte(0x0B)
+  		write_amf3_string("") #Anonymous object
+      value.each do |k,v|
+        write_amf3_string(k.to_s)
+        write_amf3(v)
+      end
+  		write_amf3_string("")
+  	end
   end
   
   def write_amf3_date(value)
     i = @stored_objects.index(value)
-    if (i != nil)
+    if i != nil
       reference = i << 1
       write_amf3_integer(reference)
     else
@@ -392,7 +412,7 @@ class AMFSerializer
   
   def write_time_as_amf3_date(value)
     i = @stored_objects.index(value)
-    if (i != nil)
+    if i != nil
       reference = i << 1
       write_amf3_integer(reference)
     else
@@ -601,10 +621,6 @@ class AMFSerializer
 
 	# Write a Flash String object
 	def write_string(string)
-	  #this is a *hack* to get around ruby's problem with using "id" on an object
-	  if string == 'amf_id'
-	    string = 'id'
-	  end
 		write_byte(2)
 		write_utf(string.to_s)
 	end
@@ -659,13 +675,14 @@ class AMFSerializer
     end
     
 	  begin
-			if object.rmembers != nil
-			  members = object.rmembers
-			elsif(object.is_a?(OpenStruct))
-        members = object.marshal_dump.keys.map{|k| k.to_s} #returns an array of all the keys in the OpenStruct
-			else
-			  members = object.instance_variables.map{|mem| mem[1,mem.length]}
-			end
+	    members = object.get_members
+			#if object.rmembers != nil
+			#  members = object.rmembers
+			#elsif(object.is_a?(OpenStruct))
+      #  members = object.marshal_dump.keys.map{|k| k.to_s} #returns an array of all the keys in the OpenStruct
+			#else
+			#  members = object.instance_variables.map{|mem| mem[1,mem.length]}
+			#end
 	  rescue Exception => e
 	    #if exception from testing against value.rmembers is thrown, catch here and make sure to set members
 	    if(object.is_a?(OpenStruct))

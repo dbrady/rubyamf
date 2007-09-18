@@ -53,7 +53,7 @@ class RubyamfController < ActionController::Base
 			#if your using Flash 9 with Flash Remoting the format needs to be 'fl9'
 			#if your useing Flash 8 with Flash Remogin the format needs to be 'fl8'
 			#Flex FDS RemoteObject is handled nativly. No need to adjust the format for that.
-			gateway.recordset_format = 'fl8' #OR 'fl9'
+			gateway.recordset_format = 'fl9' #OR 'fl8'
 			#Note: You can use netConnection.addHeader to change this from Flash instead.
 			#service.addHeader('recordset_format',false,'fl9');
 			#service.addHeader('recordset_format',false,'fl8')
@@ -81,4 +81,14 @@ class RubyamfController < ActionController::Base
 	    STDOUT.puts e.backtrace
 	  end
   end
+  
+  
+  def rescue_action(e)
+    #There are a couple things that will trigger this rescue_action. Which aren't
+    #ever returned to the flash player. be ware. but I will put a fix for this in.
+    puts "/rubyamf/gateway/render_action"
+    puts e.message
+    puts e.backtrace
+  end
+  
 end

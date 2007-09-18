@@ -11,6 +11,7 @@ require 'util/string'
 require 'util/log'
 require 'util/net_debug'
 require 'util/active_record'
+require 'util/bigdecimal'
 require 'logger'
 require 'zlib'
 include RUBYAMF::Actions

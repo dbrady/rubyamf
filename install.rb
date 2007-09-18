@@ -9,6 +9,21 @@ begin
   
   if !File.exist?('./config/rubyamf/vo_config.rb')
     FileUtils.copy_file("./vendor/plugins/rubyamf/rubyamf_core/rails_installer_files/vo_config.rb", "./config/rubyamf/vo_config.rb", false)
+  else
+    #Take out ValueObjects.rails_parameter_hash_mapping
+    fc = ''
+    File.open("./config/rubyamf/vo_config.rb","r") do |f|
+      while line = f.gets
+        if line.match(/rails_parameter_mapping_type/)
+          next
+        else
+          fc << line
+        end
+      end
+    end
+    File.open("./config/rubyamf/vo_config.rb","w") do |f|
+      f.puts fc
+    end
   end
   
   if overwrite || !File.exist?('./config/rubyamf/adapters_config.rb')

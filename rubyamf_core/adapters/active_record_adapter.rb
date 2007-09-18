@@ -46,12 +46,7 @@ class ActiveRecordAdapter
     0.upto(num_rows - 1) do
       o = OpenStruct.new
       class << o
-        def id
-          return self.amf_id
-        end
-        def id=(val)
-          self.amf_id = val
-        end
+        attr_accessor :id
       end
       
       #turn the outgoing object into a VO if neccessary
@@ -99,12 +94,7 @@ class ActiveRecordAdapter
     0.upto(num_rows - 1) do
       o = OpenStruct.new
       class << o
-        def id
-          return self.amf_id
-        end
-        def id=(val)
-          self.amf_id = val
-        end
+        attr_accessor :id
       end
 
       #turn the outgoing object into a VO if neccessary

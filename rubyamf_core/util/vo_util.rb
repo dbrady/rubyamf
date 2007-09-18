@@ -21,13 +21,13 @@ class VoUtil
       mappings.each do |map|
         if map[:incoming] == classname
           vomap = map #store vomap
-          if map[:type] != nil && map[:type] == 'active_record'
+          if map[:type] != nil && map[:type].to_s == 'active_record'
             vo = self.get_active_record_from_open_struct(os)
             active_rec = true
             break
           else
             filepath = map[:map_to].split('.').join('/').to_s + '.rb' #set up filepath from the map_to symbol
-            require RUBYAMF_VO + '/' + filepath #require the file
+            load(RUBYAMF_VO + '/' + filepath) #require the file
             vo = Object.const_get(classname.split('.').last).new #this returns an instance of the VO
             break
           end
@@ -121,9 +121,32 @@ class VoUtil
     end
 
     hash = self.make_hash_for_active_record_from_open_struct(os)
-    ActiveRecord::Base.update_nil_associations(Object.const_get(classname),hash) #update the hash so nil assotiations don't mess up AR
+    ActiveRecord::Base.update_nil_associations(Object.const_get(classname),hash,os) #update the hash so nil assotiations don't mess up AR
     ActiveRecord::Base.update_nans(hash)
-    ar = Object.const_get(classname).new(hash)
+    
+    #catch active record errors
+    begin
+      if os.id != 0 && os.id.to_s != 'NaN' && os.id != nil
+        ar = Object.const_get(classname).find(os.id)
+        if os.created_at == nil
+          os.delete_field('created_at')
+        end
+        os.delete_field('updated_at') #always delete any updated_at fields, let AR put in the updated at
+        os.get_members.each do |k| #go through each value in the object, if it's nil don't put it in the update hash
+          val = os.send(:"#{k}")
+          if val == nil || val == NaN
+            os.delete_field(k)
+          end
+        end
+      else
+        ar = Object.const_get(classname).new(hash)
+      end
+    rescue Exception => e
+      raise
+    end
+    
+    #store the original vo for later, (in the RailsInvokeAction)
+    ar.original_vo_from_deserialization = os
     return ar
   end
 end

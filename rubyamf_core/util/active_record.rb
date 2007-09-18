@@ -1,5 +1,11 @@
 class ActiveRecord::Base
-
+  
+  #This holds the original incoming Value Object from deserialization time, as when an incoming VO with an 'id' property
+  #on it is found, it is 'found' (Model.find(id)) in the DB (instead of Model.new(hash)). So right before the params hash
+  #is updated for the rails request, I slip in this original object so you can do an "update_attributes(params[:model])"
+  #and the correct 'update' values will be used.
+  attr_accessor :original_vo_from_deserialization
+  
   #This member, and the "single" methods are used for ActiveRecord#as_single!
   #which causes RubyAMF to write just an object to the stream, instead of wrapping
   #the object in an array.
@@ -56,7 +62,7 @@ class ActiveRecord::Base
   end
   
   #turn this ActiveRecord into an update hash
-  def to_update_hash
+  def to_hash
     o = {}
     column_names = self.get_column_names
     
@@ -82,24 +88,28 @@ class ActiveRecord::Base
   #This takes an update hash used in instantiating new ActiveRecord instances,
   #and updates any members that are considered associations but didn't
   #have any values sent with it (nil)
-  def self.update_nil_associations(klass, hash)
+  def self.update_nil_associations(klass, hash, orig_vo_openstruct)
+    os = orig_vo_openstruct
     associations = klass.reflect_on_all_associations
     if !associations.empty? && !associations.nil?
       associations.each do |ass|
-        n = ass.name.to_s    
+        n = ass.name.to_s
         if ass.macro == :belongs_to
           if hash[n].nil? || hash[n].empty? || hash[n].to_s == 'NaN' || hash[n].to_s == 'undefined'
             hash[n] = nil
+            eval("os.#{n} = nil")
           end                                        
         
         elsif ass.macro == :has_many
           if hash[n].nil? || hash[n].empty? || hash[n].to_s == 'NaN' || hash[n].to_s == 'undefined'
             hash[n] = []
+            eval("os.#{n} = []")
           end                                        
 
         elsif ass.macro == :has_and_belongs_to_many
           if hash[n].nil? || hash[n].empty? || hash[n].to_s == 'NaN' || hash[n].to_s == 'undefined'
             hash[n] = []
+            eval("os.#{n} = []")
           end
         end
       end

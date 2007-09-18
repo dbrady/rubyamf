@@ -46,7 +46,7 @@ class PrepareAction
       amfbody.set_amf0_class_file_and_uri
       amfbody.set_amf0_service_and_method
     end    
-  end    
+  end  
 end
 
 #Loads the file that contains the service method you are calling.
@@ -190,7 +190,7 @@ class InvokeAction
 		rescue LoadError => e
 			raise RUBYAMFException.new(RUBYAMFException.LOAD_CLASS_FILE, "The file #{@amfbody.class_file_uri}#{@amfbody.class_file} was not loaded. Check to make sure it exists in: #{RequestStore.service_path}")
 		rescue Exception => e
-		  raise RUBYAMFException.new(RUBYAMFException.LOAD_CLASS_FILE, "There was an error loading file #{@amfbody.class_file_uri}#{@amfbody.class_file}.")
+		  raise RUBYAMFException.new(RUBYAMFException.LOAD_CLASS_FILE, "There was an error loading file #{@amfbody.class_file_uri}#{@amfbody.class_file}. #{e.message}")
 		end
     
     #authentication, simple
@@ -329,17 +329,42 @@ class RailsInvokeAction
 		if @amfbody.value.empty? || @amfbody.value.nil?
 		  @service.process(req,res)
 		else
-		  @amfbody.value.each_with_index do |item,i|
+		  @amfbody.value.each_with_index do |item,i|		    
+		    req.parameters[i] = item
 		    if item.class.superclass.to_s == 'ActiveRecord::Base'
-          if ValueObjects.rails_parameter_mapping_type == 'active_record'
-            req.parameters[item.class.to_s.downcase] = item
-          else
-		        req.parameters[item.class.to_s.downcase] = item.to_update_hash
-		      end
+		      req.parameters[i] = item.original_vo_from_deserialization.to_hash
+          if i < 1 #Only the first parameter will be 
+            req.parameters.merge!(item.original_vo_from_deserialization.to_hash) #merge in properties into the params hash
+            #have to specifically check for id here, as it doesn't show up in any object members.
+            if item.original_vo_from_deserialization.id != nil
+              #This will override the above params[:id] attempt, because it's the original deserialized values.
+              req.parameters[:id] = item.original_vo_from_deserialization.id
+            end
+          end
+	        req.parameters[item.class.to_s.downcase.to_sym] = item.original_vo_from_deserialization.to_hash
+	        
 		    elsif !item._explicitType.nil?
-  		    req.parameters[item._explicitType.to_sym] = item
-		    else
-		      req.parameters[i] = item
+		      t = item._explicitType
+		      if t.include?('.')
+		        t = t.split('.').last.downcase.to_s
+		      end
+  		    req.parameters[t.to_sym] = item.to_hash
+  		    if i < 1
+  		      if item.class.to_s == 'Object' || item.class.to_s == 'OpenStruct'
+    		      if item.id != nil && item.id.to_s != 'NaN' && item.id != 0
+    		        req.parameters[:id] = item.id
+    		      end
+    		    end
+  		      req.parameters.merge!(item.to_hash)
+  		    end
+  		    
+  		  elsif item.class.to_s == 'OpenStruct' || item.class.to_s == "Object"
+		      if i < 1
+  		      if item.id != nil && item.id.to_s != 'NaN' && item.id != 0
+  		        req.parameters[:id] = item.id
+  		      end
+  		      req.parameters.merge!(item.to_hash)
+  		    end  		    
 		    end
       end
 	    @service.process(req,res)

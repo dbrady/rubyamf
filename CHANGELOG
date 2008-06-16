@@ -1,3 +1,62 @@
+--change 1.6.1
+* fixed issue 62 - false is rendered as null
+
+--changes 1.6
+Changes
+* documented hash_key_access for ClassMappings.
+* new install process - now updates routes.rb with the rubyamf controller route. Also puts the mime type registration in the config/initializers directory if there is one, to conform better to Rails 2 convention. One day rubyamf_config.rb may live there too.
+* added ability to specify method results from active records to be set on actionscript object properties, just like attributes.
+* added a generator, rubyamf_scaffold, to generate a RubyAMF scaffold - a model, fixtures, tests, and a RubyAMF specific controller
+* added a "generator", rubyamf_mappings, to assist creating class mappings. Writes mappings for all models to the command line; does not modify any files.
+
+Many Bug fixes, e.g.:
+* fixed annoying warning where rubyamf was sending attributesCache or attributes_cache as an attribute of all objects
+* fixed issue saving new active records with timestamps where timestamp variables are ignored
+* fixed a bug where rendering a FaultEvent would throw another exception since result has no clientId in that case
+* reimplemented object references in the serializer - incoming object graphs work now
+* fixed issue 48, module error when passing hash to controller with scaffolding on. Also added related scaffolding improvement.
+* fixed issue with Rails 2
+* fixed issue 36, error stopping migrations from working
+* fixed issues with authenticaiton credentials and the ClassMappings.hash_key_access. Athentication was always :symbols, where it should be taking hash_key_access into account and give you what you want..
+* fixed some small but big bugs in the serializer. in write_amf3. was testing (if !value). but that is wrong, as it should specifically be if value == nil. otherwise when false comes through the serializer, it will be null in flex
+
+
+--changes 1.5
+#re-factored 80% of the codebase
+#Added ClassMappings.ignore_fields for globally ignoring incoming properties on objects
+#Added ClassMappings.translate_case
+#Added ClassMappings.force_active_record_ids for forcing id's to be included in incoming hash's, even if you don't put it in the :attributes of a class mapping.
+#Added ClassMappings.assume_types. For assuming typed object transfers. This enables typed transfers without defining ClassMappings
+#Added ClassMappings.use_ruby_date_time.
+#Added ClassMappings.use_array_collection
+#Added ClassMappings.check_for_associations
+#Added ParameterMappings.always_add_to_params
+#Added ParameterMappings.scaffolding
+#Added :attributes,:associations,:ignore_fields,:scope into ClassMappings.register options
+#Fixed referencing bug with deserializer
+#renamed ValueOBjects to ClassMappings
+
+--changes 1.3.4
+#Killed RubyAMF Lite. The last version of RubyAMF Lite can be found in svn at /branches/rubyamflite_9**.
+#single mysql records are ALWAYS returned as an object, not wrapped in an array anymore.
+#single active records are ALWAYS returned as an object. No use for as_single! anymore. Note there is a deprecation warning if you use it.
+#fixed small bug with incoming VO names. EI this wouldn't work: ValueObjects.regier({:incoming=>'vo.SectionVO',:map_to=>'Section',:outgoing=>'vo.SectionVO'}). Note that the package always get's truncated in situation like this. So this would be in the params hash as params[:sectionvo].
+#added case translations for value objects. You can translate incoming lowerCamelCase to snake_case, and outgoing snake_case to lowerCamelCase. See configuration for value objects. (ValueObjects.translate_case)
+#added setRemoteCredentials support.
+#added "credentials" method to ActionController::Base. Anytime you set credentials with "setRemoteCredentials" or "setCredentials" in Flex, this method will return a hash with {username:'username',password:'mypassword'}.
+#fixed issue with returned value objects that had :belongs_to association, it now correctly returns an object, not wrapped in any array anymore.
+#changed read_write so it doesn't crash in production when setCredentials is set. When in production mode the exception message was different in different modes.
+#fixed debug player issues. It correlates to the rails modes. An error that was happening while reading integers was raising errors, but the message was different per mode, so a regex I was using to sniff it was not catching it in production mode.
+#added :through support, note that in order to get your data back to Flex, you must use eager loading (:include)
+#added magic_field ignorance. Incoming VO's magic field members are ignored. Currently magic fields are "created_at","created_on","updated_at","updated_on"
+#Rails no longer complains about missing views for RubyAMF requests.
+#added ParamMapping for mapping incoming remoting parameters into rails' params hash.
+#Rewrote active record adapter. Everything is done with the usual recursion, but also with reflections. Allows a 1:1 VO to AR.
+#Squeezed every possible millisecond out of the active record adapter. It's slightly faster, were talking 10's - 100's of milleseconds. The speed increase varies depending on the complexity of your result.
+#Fixed problem with VO's that aren't active records.
+#Added ValueObjects.vo_path to vo_config. See the documentation in that config file about what it is.
+#Changed how render AMF decorates ActionController::Base. This new way is right for rails. It has suppressed any errors with rendering / layouts
+
 --changes 1.3.3b
 #updated rails parameter mapping for sending generic objects from flash/flex
 
@@ -30,6 +89,7 @@
 #changed recordset_format default to be FL9
 #Handled bug with Date/Time/DateTime not writing as correct reference to other Date's in the AMF stream, (if the same date was being returned, it would write a reference, but writing references to dates does not work correctly in the player)
 #fixed final friggin 'id' property problems. All id attributes come through correctly now, (both ways).
+
 
 --changes 1.3.1
 #added Adapters.deep_adaptations See an adapters_config file for more information.

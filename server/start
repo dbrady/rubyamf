@@ -1,2 +1,0 @@
-$VERBOSE=nil #turn of warnings
-require 'server/support/optparser' #kick off the option parsing

@@ -4,6 +4,8 @@ ActionController::Base.class_eval do
   def render_with_amf(options = nil, &block)
     begin
       if options && options.is_a?(Hash) && options.keys.include?(:amf)
+        #set the @performed_render flag to avoid double renders
+        @performed_render = true
         #store results on RequestStore, can't prematurely return or send_data.
         RubyAMF::App::RequestStore.render_amf_results = options[:amf]
         RubyAMF::Configuration::ClassMappings.current_mapping_scope = options[:class_mapping_scope]||RubyAMF::Configuration::ClassMappings.default_mapping_scope
@@ -38,11 +40,12 @@ private
   end
   
   #remoteObject setRemoteCredentials retrieval
-  def html_credentials
+ def html_credentials
     auth_data = request.env['RAW_POST_DATA']
-    auth_data = auth_data.scan(/DSRemoteCredentials.*?\001/)
+    auth_data = auth_data.scan(/DSRemoteCredentials\006.([A-Za-z0-9\+\/=]*).*?\006/)[0][0]
+    auth_data.gsub!("DSRemoteCredentialsCharset", "")
     if auth_data.size > 0
-      auth_data = auth_data[0][21, auth_data[0].length-22]
+
       remote_auth = Base64.decode64(auth_data).split(':')[0..1]
     else
       return nil
@@ -55,5 +58,5 @@ private
     when :indifferent:
       return HashWithIndifferentAccess.new({:username => remote_auth[0], :password => remote_auth[1]})
     end
-  end  
+  end
 end

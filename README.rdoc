@@ -1,0 +1,17 @@
+= Overview
+
+This is a port of the RubyAMF project from googlecode. It was
+originally maintained by Aaron Smith, but has been abandoned. I (David
+Brady) am not proposing to take over maintenance for this project, but
+in a crowdsource-friendly fashion I *am* putting it here on github and
+inviting patches.
+
+= License
+
+Aaron Smith's original license, which can be summarized as "MIT
+License, unless you are WebORB, in which case screw you."
+
+= Original RubyAMF README, Reproduced Here in its Entirety
+(c) aaron smith, aaron@rubyamf.org
+http://www.rubyamf.org
+http://code.google.com/p/rubyamf

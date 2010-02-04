@@ -1,7 +1,7 @@
 require 'app/request_store'
 require 'app/configuration'
 ActionController::Base.class_eval do
-  def render_with_amf(options = nil, &block)
+  def render_with_amf(options = nil, extra_options=nil, &block)
     begin
       if options && options.is_a?(Hash) && options.keys.include?(:amf)
         #set the @performed_render flag to avoid double renders

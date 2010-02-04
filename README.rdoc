@@ -6,6 +6,19 @@ Brady) am not proposing to take over maintenance for this project, but
 in a crowdsource-friendly fashion I *am* putting it here on github and
 inviting patches.
 
+See http://www.rubyamf.org for more information and documentation.
+
+See http://code.google.com/p/rubyamf for the original Google Code
+project.
+
+See http://groups.google.com/group/RubyAMF for an mailing list that
+has been abandoned to spammers and porn with the exception of the
+occasional "Is this group dead?" post.
+
+= Installation
+
+  script/plugin install git://github.com/dbrady/rubyamf
+
 = License
 
 Aaron Smith's original license, which can be summarized as "MIT

@@ -1,3 +1,8 @@
+2010-02-04:
+* Fixed crash bug in RSpec. render() was being called from a child class via super(). In Rails 2.1, render() got a second parameter. All we did was ignore the second parameter, which may be wrong, but passing further up the chain causes crashes in other areas, so we just drop it on the floor for now.
+
+
+==== END OF CHANGES FROM ORIGINAL PROJECT ====
 --changes 1.6.5
 * Fixed issue #107, method mapping for associations
 * fixed issue where associations of type :has_and_belongs_to_many where not being detected
